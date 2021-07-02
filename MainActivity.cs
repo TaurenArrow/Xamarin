@@ -4,18 +4,22 @@ using Android.Runtime;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using System;
-using System.IO;
 
 namespace SQLite
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
+    [Activity(Label = "Add new contact", Theme = "@style/AppTheme", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
+        char[] test = new char[1];
+
         //Create components variables
-        TextView txtNome, txtCog, log;
-        EditText etNome, etCog;
+        TextView log;
+        EditText etNome, etCog, etTel;
         Button btnInsert, btnSelectAll;
-        private string completePath;
+        
+        //DB obj
+        DbManagment db;
+        int rowsAdded;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -23,25 +27,37 @@ namespace SQLite
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
+            test[0] = default(char);
+
             #region Set Up Components
-            txtNome = FindViewById<TextView>(Resource.Id.txtNome);
-            txtCog = FindViewById<TextView>(Resource.Id.txtCog);
             log = FindViewById<TextView>(Resource.Id.txtLog);
 
             etNome = FindViewById<EditText>(Resource.Id.etNome);
             etCog = FindViewById<EditText>(Resource.Id.etCog);
+            etTel = FindViewById<EditText>(Resource.Id.etTel);
 
             btnInsert = FindViewById<Button>(Resource.Id.btnInsert);
             btnSelectAll = FindViewById<Button>(Resource.Id.btnSelectAll);
 
             btnInsert.Click += BtnInsert_Click;
-            btnSelectAll.Click += BtnSelectAll_Click;
+            btnSelectAll.Click += delegate { StartActivity(typeof(SelectActivity)); };
             #endregion
 
-            #region crete path db
-            string fileName = "contacts_db.db3";
-            string folderPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal);
-            completePath = Path.Combine(folderPath, fileName);
+            #region Set Up DB
+            db = new DbManagment();
+            db.createPath();
+            #endregion
+
+            #region DROP TABLE
+            /*
+            using (SQLiteConnection con = new SQLiteConnection(db.completePath))
+            {
+                SQLiteCommand cmd = new SQLiteCommand(con);
+                cmd.CommandText = " DROP Table 'contact'";
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+            */
             #endregion
         }
 
@@ -52,35 +68,33 @@ namespace SQLite
             Contact contact = new Contact()
             {
                 Nome = etNome.Text,
-                Cognome = etCog.Text
+                Cognome = etCog.Text,
+                numTelefono = etTel.Text
             };
 
+            Console.WriteLine(db);
+            Console.WriteLine(contact);
+
+
             //create connection and insert
-            using (SQLiteConnection con = new SQLiteConnection(completePath))
+            using (SQLiteConnection con = new SQLiteConnection(db.completePath))
             {
                 con.CreateTable<Contact>();
-                int rowsAdded = con.Insert(contact);
-                updateLog(etNome.Text + " " + etCog.Text + " è stato inserito (" + rowsAdded + ")");
+                rowsAdded = con.Insert(contact);
+                con.Close();
             }
-        }
 
-        //BTN SELECT
-        private void BtnSelectAll_Click(object sender, System.EventArgs e)
-        {
-            using (SQLiteConnection con = new SQLiteConnection(completePath))
-            {
-                con.CreateTable<Contact>();
-                var contacts = con.Table<Contact>().ToList();
-                foreach (var item in contacts) Console.WriteLine(item);
+            updateLog(etNome.Text + " " + etCog.Text + " è stato inserito nel db");
 
-                //contacts.ForEach(Console.WriteLine);  
-            }
+            etNome.SetText(test, 0, 1);
+            etCog.SetText(test, 0, 1);
+            etTel.SetText(test, 0, 1);
         }
 
         //UPDATE LOG
         private void updateLog(string s)
         {
-            string logString = log.Text + " \n " + s;
+            string logString = log.Text + " \n" + s;
             log.Text = logString;
         }
 

@@ -29,6 +29,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/etCog" />
+    <TextView
+        android:text="Numero di telefono"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtTel" />
+    <EditText
+        android:inputType="textPhonetic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/etTel" />
     <Button
         android:text="Insert"
         android:layout_width="match_parent"
