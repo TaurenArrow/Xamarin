@@ -1,25 +1,21 @@
 ﻿using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Widget;
 using AndroidX.AppCompat.App;
-using System;
+using ListViewTutorial.Resources.layout;
+using System.Collections.Generic;
 
-namespace SQLite
+namespace ListViewTutorial
 {
-    [Activity(Label = "Add new contact", Theme = "@style/AppTheme", MainLauncher = true)]
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
-        char[] test = new char[1];
-
-        //Create components variables
-        TextView log;
-        EditText etNome, etCog, etTel;
-        Button btnInsert, btnSelectAll;
-        
-        //DB obj
-        DbManagment db;
-        int rowsAdded;
+        public string idItem;
+        private List<string> items;
+        private ListView listView1;
+        private TextView log;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -27,75 +23,35 @@ namespace SQLite
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
-            test[0] = default(char);
+            listView1 = FindViewById<ListView>(Resource.Id.lv);
+            log = FindViewById<TextView>(Resource.Id.log);
 
-            #region Set Up Components
-            log = FindViewById<TextView>(Resource.Id.txtLog);
+            items = new List<string>();
+            items.Add("Ciao_1");
+            items.Add("Ciao_2");
+            items.Add("Ciao_3");
 
-            etNome = FindViewById<EditText>(Resource.Id.etNome);
-            etCog = FindViewById<EditText>(Resource.Id.etCog);
-            etTel = FindViewById<EditText>(Resource.Id.etTel);
+            ArrayAdapter<string> a = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleListItem1, items);
 
-            btnInsert = FindViewById<Button>(Resource.Id.btnInsert);
-            btnSelectAll = FindViewById<Button>(Resource.Id.btnSelectAll);
+            listView1.Adapter = a;
 
-            btnInsert.Click += BtnInsert_Click;
-            btnSelectAll.Click += delegate { StartActivity(typeof(SelectActivity)); };
-            #endregion
-
-            #region Set Up DB
-            db = new DbManagment();
-            db.createPath();
-            #endregion
-
-            #region DROP TABLE
-            /*
-            using (SQLiteConnection con = new SQLiteConnection(db.completePath))
-            {
-                SQLiteCommand cmd = new SQLiteCommand(con);
-                cmd.CommandText = " DROP Table 'contact'";
-                cmd.ExecuteNonQuery();
-                con.Close();
-            }
-            */
-            #endregion
+            listView1.ItemClick += ListView1_ItemClick;
         }
 
-        //BTN INSERT
-        private void BtnInsert_Click(object sender, System.EventArgs e)
+        private void ListView1_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            //create obj
-            Contact contact = new Contact()
-            {
-                Nome = etNome.Text,
-                Cognome = etCog.Text,
-                numTelefono = etTel.Text
-            };
-
-            Console.WriteLine(db);
-            Console.WriteLine(contact);
+            var item = items[e.Position];
 
 
-            //create connection and insert
-            using (SQLiteConnection con = new SQLiteConnection(db.completePath))
-            {
-                con.CreateTable<Contact>();
-                rowsAdded = con.Insert(contact);
-                con.Close();
-            }
+            var MyIntent = new Intent(this, typeof(Activity1));
+            MyIntent.PutExtra("IdItem", item);
 
-            updateLog(etNome.Text + " " + etCog.Text + " è stato inserito nel db");
-
-            etNome.SetText(test, 0, 1);
-            etCog.SetText(test, 0, 1);
-            etTel.SetText(test, 0, 1);
+            StartActivity(MyIntent);
         }
 
-        //UPDATE LOG
-        private void updateLog(string s)
+        public string getIdItem()
         {
-            string logString = log.Text + " \n" + s;
-            log.Text = logString;
+            return idItem;
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
